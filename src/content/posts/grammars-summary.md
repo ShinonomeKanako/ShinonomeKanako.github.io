@@ -268,3 +268,19 @@ const b = 2
 const c = 3
 const d = 4
 ```
+
+## Frontmatter 语言字段（lang）
+
+文章 frontmatter 的 `lang` 字段用于声明文章语言，影响页面的 `lang` 属性。留空则继承 `src/config.ts` 中 `siteConfig.lang` 的值。
+
+常用取值（遵循 [IETF 语言标签](https://en.wikipedia.org/wiki/IETF_language_tag) 规范）：
+
+| 值 | 语言 |
+|---|---|
+| `zh_CN` | 简体中文 |
+| `zh_TW` | 繁体中文 |
+| `en` | 英语 |
+| `ja` | 日语 |
+| `ko` | 韩语 |
+| `fr` | 法语 |
+| `de` | 德语 |
