@@ -16,7 +16,7 @@ lang: 'en'
 a callback is a function (or callable object) that you pass to another function so it can be called later when a certain event happens or when some work is finished.
 :::
 In traditional C++, callback is usually implemented by **function pointer**, which is the C-style way, while in modern C++ (C++11 and after), it is **keyword `function`** that is more frequently used. A simple example is as follows:
-```C++
+```cpp
 #include <iostream>
 using namespace std;
 
@@ -33,7 +33,7 @@ int main() {
 ## lambda expression
 A lambda expression is essentially an anonymous function.
 The standard syntax of a C++ lambda looks a bit like a spaceship: []() -> {}. Here is how it breaks down:
-```C++
+```cpp
 [captures] (parameters) -> return_type {
     // function body
 };
@@ -49,7 +49,7 @@ The standard syntax of a C++ lambda looks a bit like a spaceship: []() -> {}. He
 ## quick review
 
 Let's just finish the lesson by giving an example:
-```C++
+```cpp
 #include <iostream>
 #include <functional>
 
@@ -84,7 +84,7 @@ int main() {
 A smart pointer is a tool that automatically cleans up memory for you.
 ### unique_pointer
 What it means: "I am the only one who owns this memory."
-```C++
+```cpp
 #include <iostream>
 #include <memory>
 #include <string>
@@ -125,7 +125,7 @@ int main() {
 ```
 ### shared_ptr
 What it means: "Me and a few of my friends are sharing this memory."
-```C++
+```cpp
 #include <iostream>
 #include <memory>
 #include <string>
@@ -171,7 +171,7 @@ In C++, `std::bind` is a tool that lets you take an existing function and create
 Usually, we use it to make a function "fit" into a callback that expects fewer arguments. If a callback system only gives you one argument, but your function needs two, you can use `std::bind` to lock in the second argument ahead of time.
 ### a simple example
 This example demonstrates how to prefil one parameter of a function by using `std::bind`.
-```C++
+```cpp
 #include <iostream>
 #include <functional> // Required for std::bind and std::placeholders
 
