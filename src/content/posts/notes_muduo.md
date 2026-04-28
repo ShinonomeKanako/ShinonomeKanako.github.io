@@ -1,9 +1,9 @@
 ---
-title: Notes on Muduo
+title: Notes on Muduo - Fundamental Knowledge
 published: 2026-04-26
-description: ''
+description: 'The domain knowledge required in C++ language and networking to start studying muduo, a famous network library.'
 image: ''
-tags: [tech]
+tags: [muduo, networking]
 category: 'tech'
 draft: false 
 lang: 'en'
@@ -472,3 +472,5 @@ When you call `connect()`, the operating system takes your target address and **
 If the server is currently running `listen()` and has room in its waiting queue, the handshake completes, and `connect()` returns 0, which represents success.
 
 If the server is offline, if a firewall blocks it, or if you typed the wrong IP address, `connect()` will fail and return -1.
+
+# epoll
