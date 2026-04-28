@@ -67,7 +67,23 @@ The packet is encapsulated inside a standard IPv4 frame using IANA experimental 
 
 The overall packet layout looks like this:
 
-![New IP packet structure](./image/newip.png)
+```
+New IP packet (abstract model)
+┌─────────────────┬──────────────────┬───────────────────┬──────────────────┐
+│  New IP Header  │  Transport Spec  │   Contract Spec   │   Payload Spec   │
+└────────┬────────┴────────┬─────────┴─────────┬─────────┴────────┬─────────┘
+         │                  ╲                  ╱                   │
+         │                   ╲                ╱                    │
+         ▼                    ▼              ▼                     ▼
+┌─────────────────┬──────────────────┬───────────────────┬──────────────────┐
+│ Original IP Hdr │  Contract Spec   │  Offset Pointers  │  Chunked Payload │
+│                 ├──────────────────┴───────────────────┴──────────────────┤
+│                 │                    Original IP Payload                   │
+└─────────────────┴─────────────────────────────────────────────────────────┘
+IP packet (on the wire)
+```
+
+The New IP abstract model maps onto a plain IPv4 frame: the contract, offset pointer fields, and chunked payload all sit inside the IPv4 payload area. Legacy routers see a normal IP packet and forward it untouched; only BPP-aware nodes inspect the inner structure.
 
 The key benefit: the sender decides upfront what parts of its payload are expendable. When a router trims the tail of the packet, it's not guessing — it's following the sender's own declared preference.
 
@@ -79,7 +95,32 @@ My first instinct was to implement the router logic using Linux **traffic contro
 
 **XDP (eXpress Data Path)** hooks into the network driver layer, *before* any kernel protocol processing. The BPF program runs as soon as the packet DMA completes, with direct access to the raw frame buffer. If we decide to drop or trim the packet, we do it before a single byte of kernel socket infrastructure is touched.
 
-![tc vs XDP in the Linux network stack](./image/tc_and_xdp.png)
+Here is where each hook sits in the Linux packet path:
+
+```
+         Ingress path                          Egress path
+         ─────────────                         ────────────
+
+    ┌─────────────────────┐
+    │   NIC driver (RX)   │
+    └──────────┬──────────┘
+               │
+               ▼
+    ┌─────────────────────┐              ┌─────────────────────┐
+    │   XDP hook  ◀ USED  │              │   tc qdisc  ✗ SKIP  │
+    │─────────────────────│              │─────────────────────│
+    │ · token bucket sim  │              │ · whole-packet drop │
+    │ · packet trimming   │      │──────>│ · delay control     │
+    │ · throughput stats  │      │       │ · throughput stats  │
+    └──────────┬──────────┘      │       └──────────┬──────────┘
+    XDP_DROP ◀─┤                 │                  │
+               │                 │                  ▼
+               ▼                 │       ┌─────────────────────┐
+    ┌─────────────────────┐      │       │   NIC driver (TX)   │
+    │  Kernel IP stack    │───────       │   routing + fwd     │
+    │  routing + fwd      │              └─────────────────────┘
+    └─────────────────────┘
+```
 
 The tradeoff is that XDP programs are more constrained: the BPF verifier enforces strict memory safety, loops must have provably bounded iteration counts, and you can't call arbitrary kernel functions. These constraints are manageable with care, and they're actually a good forcing function for keeping the fast path lean.
 
