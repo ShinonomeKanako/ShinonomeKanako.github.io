@@ -1,5 +1,5 @@
 ---
-title: "A Router That Trims Instead of Drops"
+title: "BPP Router 1 - A Router That Trims Instead of Drops"
 published: 2026-04-28
 description: "Traditional routers drop entire packets when buffers overflow. This post introduces an alternative design — importance-aware payload trimming — and the motivation behind building a small prototype around it."
 image: ''
@@ -70,7 +70,7 @@ The overall packet layout looks like this:
 ```
 New IP packet (abstract model)
 ┌─────────────────┬──────────────────┬───────────────────┬──────────────────┐
-│  New IP Header  │  Transport Spec  │   Contract Spec   │   Payload Spec   │
+│  New IP Header  │  Contract Spec   │   Shipping Spec   │   Payload Spec   │
 └────────┬────────┴────────┬─────────┴─────────┬─────────┴────────┬─────────┘
          │                  ╲                  ╱                   │
          │                   ╲                ╱                    │
