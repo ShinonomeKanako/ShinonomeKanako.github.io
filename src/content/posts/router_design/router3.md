@@ -1,5 +1,5 @@
 ---
-title: "Packet Format Design and In-Kernel Trimming"
+title: "BPP Router 3 - Packet Format Design and In-Kernel Trimming"
 published: 2026-04-28
 description: "How the New IP packet format encodes importance metadata inside a standard IPv4 frame, and how an XDP program walks the chunk list and physically shrinks packets in-kernel."
 image: ''

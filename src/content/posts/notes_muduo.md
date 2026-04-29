@@ -474,3 +474,87 @@ If the server is currently running `listen()` and has room in its waiting queue,
 If the server is offline, if a firewall blocks it, or if you typed the wrong IP address, `connect()` will fail and return -1.
 
 # epoll
+
+In Linux, everything is a File Descriptor (FD). When a server accepts a network connection, that connection is assigned an FD. If a server has 10,000 connected users, it has 10,000 FDs open.
+
+`epoll` is a Linux system call that allows a program to efficiently monitor multiple file descriptors to see if any of them are ready for Input/Output (I/O) operations, like reading or writing data.
+
+`epoll` fixes this by changing how the kernel tracks FDs. It relies on an event-driven mechanism operating in $O(1)$ time complexity.Instead of scanning a list, epoll maintains a data structure directly inside the Linux kernel. When network data arrives at the hardware network card, the kernel immediately flags the specific FD associated with that data and moves it to a "ready list."When your application asks for an update, epoll doesn't scan anything. It simply returns the contents of the "ready list." If 5 FDs have data, it hands you those 5 FDs instantly.
+
+To use epoll, a program uses three specific functions in C:
+
+- `epoll_create()`: This tells the kernel to allocate a new epoll instance. The kernel creates a red-black tree data structure in kernel-space to store the FDs you want to monitor.
+
+- `epoll_ctl()`: This is the control interface. You use it to add, modify, or remove FDs from the epoll instance. You do this once per connection. You don't have to constantly pass the FD back and forth to the kernel anymore.
+
+- `epoll_wait()`: This is where the application pauses. It blocks the thread until at least one FD in the epoll instance triggers an event (like receiving data). It then returns an array containing only the FDs that are ready for I/O.
+
+:::note
+`epoll` shifted network programming from a polling model (constantly asking "Are any of these 10,000 FDs ready?") to an event-driven model ("Wake me up and give me the exact list of FDs that just became ready").
+
+This is the underlying technology that allows modern software like Nginx, Node.js, and Redis to handle hundreds of thousands of concurrent connections on a single server without exhausting CPU resources.
+:::
+```cpp
+#include <iostream>
+#include <sys/epoll.h> // The epoll library
+#include <unistd.h>    // For read(), close(), and STDIN_FILENO
+
+int main() {
+    // 1. Create the epoll instance
+    // epoll_create1(0) is the modern equivalent of epoll_create()
+    int epoll_fd = epoll_create1(0);
+    if (epoll_fd == -1) {
+        std::cerr << "Failed to create epoll instance\n";
+        return 1;
+    }
+
+    // 2. Configure the specific file descriptor we want to monitor
+    struct epoll_event event;
+    event.events = EPOLLIN;               // We want to know when data is ready to be Read (INput)
+    event.data.fd = STDIN_FILENO;         // Monitor standard input (FD 0)
+
+    // Add STDIN to the epoll instance's internal watch list
+    if (epoll_ctl(epoll_fd, EPOLL_CTL_ADD, STDIN_FILENO, &event) == -1) {
+        std::cerr << "Failed to add file descriptor to epoll\n";
+        close(epoll_fd);
+        return 1;
+    }
+
+    // Array to hold the events that are actually ready when epoll wakes up
+    const int MAX_EVENTS = 5;
+    struct epoll_event ready_events[MAX_EVENTS];
+
+    std::cout << "Program sleeping. Type something and press Enter to wake it up...\n";
+
+    // 3. Wait for an event to happen
+    // Arguments: epoll instance, array to fill, max events to return, timeout (-1 means wait forever)
+    int num_ready = epoll_wait(epoll_fd, ready_events, MAX_EVENTS, -1);
+
+    if (num_ready == -1) {
+        std::cerr << "Error during epoll_wait\n";
+        close(epoll_fd);
+        return 1;
+    }
+
+    // 4. Process the ready file descriptors
+    for (int i = 0; i < num_ready; i++) {
+        if (ready_events[i].data.fd == STDIN_FILENO) {
+            std::cout << "\nepoll triggered! Data is ready on File Descriptor: " 
+                      << ready_events[i].data.fd << "\n";
+
+            // Read the data to clear the buffer
+            char buffer[128];
+            ssize_t bytes_read = read(STDIN_FILENO, buffer, sizeof(buffer) - 1);
+            
+            if (bytes_read > 0) {
+                buffer[bytes_read] = '\0'; // Null-terminate the string
+                std::cout << "You typed: " << buffer;
+            }
+        }
+    }
+
+    // Clean up
+    close(epoll_fd);
+    return 0;
+}
+```
