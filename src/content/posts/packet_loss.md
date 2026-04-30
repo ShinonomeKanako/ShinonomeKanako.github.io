@@ -5,7 +5,7 @@ description: ''
 image: ''
 tags: [packetloss, networking]
 category: thoughts
-draft: true
+draft: false
 lang: en
 ---
 
