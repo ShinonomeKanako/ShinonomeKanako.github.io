@@ -13,7 +13,7 @@ lang: en
 This is the record for a debate. The opinions might be subjective and one-sided.
 :::
 
-## The Introduction
+## Introduction
 
 Modern networking infrastructure is built on the TCP/IP architecture, where loss of packets naturally occurs in the network layer and below due to various reasons, such as the bit error in the physical layer, frame loss in the MAC layer and congestion in the network layer. Transport layer is designed to compensate for this problem by retransmission and other mechanisms. While in recent years the academia attempts to design a more powerful network layer with zero packet loss, i.e. the lossless network, **we argue that packet loss is not so critical that we need to design a new network to eliminate it.**
 
