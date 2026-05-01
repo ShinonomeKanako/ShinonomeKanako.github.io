@@ -197,10 +197,6 @@ int main() {
 Here is a very important secret about modern C++: You probably shouldn't use std::bind anymore. It was very popular in C++11, but as lambdas evolved in C++14 and beyond, the C++ community mostly stopped using std::bind. **Lambdas do the exact same job, but they are much easier to read**, they compile faster, and they are easier for the compiler to optimize.
 :::
 
-# The *Reactor* Pattern
-
-The *Reactor* Pattern is a high-performance network architecture used by modern systems like Redis, Nginx, and Netty, often mentioned together with the *Proactor* pattern.
-
 # TCP Basics
 :::note
 TCP (Transmission Control Protocol) is a connection-oriented, reliable protocol. This means a dedicated connection must be established between a client and a server before any data can be exchanged.
@@ -558,3 +554,53 @@ int main() {
     return 0;
 }
 ```
+
+# The *Reactor* Pattern
+
+The *Reactor* Pattern is a high-performance network architecture used by modern systems like Redis, Nginx, and Netty, often mentioned together with the *Proactor* pattern.
+
+## The Core Philosophy
+
+At its heart, the Reactor pattern is an event-driven architecture designed to handle multiple concurrent I/O operations efficiently. Instead of assigning a dedicated thread to wait on every single connection (which wastes immense system resources), the Reactor uses a non-blocking, "push-based" approach: it waits for the operating system to notify it that an event has occurred, and only then does it allocate resources to process it.
+
+## The Three Key Components
+
+The architecture relies on a strict division of labor:
+
+- Reactor (The Dispatcher): The central hub. It runs in a continuous loop, listening for incoming events (like new connections or ready-to-read data) and routing them to the appropriate handlers.
+
+- Acceptor: The greeter. When the Reactor detects a new client trying to connect, it routes the request to the Acceptor, which establishes the connection and sets up a Handler for it.
+
+- Handler: The worker. Once a connection is established and data is ready, the Handler executes the actual business logic (reading data, processing it, and sending a response).
+
+## The Engine Under the Hood: I/O Multiplexing
+
+The Reactor pattern cannot achieve high performance purely on its own—it relies heavily on the operating system's I/O Multiplexing capabilities (such as epoll in Linux, kqueue in macOS, or select/poll in older systems).
+
+`epoll` is the underlying mechanism that allows a single Reactor thread to monitor tens of thousands of connections simultaneously, notifying the Reactor the exact moment a specific connection has data ready to be processed.
+
+## The Architectural Evolution
+As system demands scale, the pattern is typically implemented in one of three ways:
+
+> “单 Reactor 单线程只有一个线程在跑所有的 Handler，而单 Reactor 多线程是用一个线程池并发跑所有的 Handler。”
+
+- Single Reactor, Single Thread:
+
+    Everything (listening, accepting, reading, processing) happens in one thread.
+
+    Best for: Extremely fast, CPU-bound operations where business logic doesn't block (e.g., early Redis).
+
+- Single Reactor, Multi-Thread:
+
+    The Reactor handles the network I/O, but offloads the heavy business logic to a separate Worker Thread Pool.
+
+    Best for: General use cases, preventing slow database queries from blocking new network connections.
+
+-  Main-Sub Reactor, Multi-Thread (The Master-Worker Model):
+
+    A Main Reactor dedicated solely to accepting new connections. It immediately passes these connections to one of several Sub Reactors, which handle the read/write I/O. The actual computation is still passed to a Thread Pool.
+
+    Best for: Massive scale and enterprise-grade performance. This is the gold standard used by Nginx, Netty, and Kafka.
+
+## The Ultimate Takeaway
+The true superpower of the Reactor pattern is decoupling. By separating the act of waiting for network data from the act of processing that data, it ensures that your CPU is always doing useful work rather than sitting idle. This is the foundational secret behind modern servers handling millions of concurrent connections with minimal hardware.
