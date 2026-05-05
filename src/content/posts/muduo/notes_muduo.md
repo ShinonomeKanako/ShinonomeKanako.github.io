@@ -1,5 +1,5 @@
 ---
-title: Notes on Muduo - Fundamental Knowledge
+title: Muduo - Fundamental Knowledge
 published: 2026-04-26
 description: 'The domain knowledge required in C++ language and networking to start studying muduo, a famous network library.'
 image: ''
