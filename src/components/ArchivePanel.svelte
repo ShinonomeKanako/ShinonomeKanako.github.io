@@ -3,10 +3,11 @@ import { onMount } from "svelte";
 
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
+import { getDisplayTags, hasPinnedTag } from "../utils/post-utils";
 import { getPostUrlBySlug } from "../utils/url-utils";
 
-export let tags: string[];
-export let categories: string[];
+export let tags: string[] = [];
+export let categories: string[] = [];
 export let sortedPosts: Post[] = [];
 
 const params = new URLSearchParams(window.location.search);
@@ -19,7 +20,7 @@ interface Post {
 	data: {
 		title: string;
 		tags: string[];
-		category?: string;
+		category?: string | null;
 		published: Date;
 	};
 }
@@ -38,7 +39,7 @@ function formatDate(date: Date) {
 }
 
 function formatTag(tagList: string[]) {
-	return tagList.map((t) => `#${t}`).join(" ");
+	return getDisplayTags(tagList).map((t) => `#${t}`).join(" ");
 }
 
 onMount(async () => {
@@ -133,6 +134,9 @@ onMount(async () => {
                      group-hover:translate-x-1 transition-all group-hover:text-[var(--primary)]
                      text-75 pr-8 whitespace-nowrap overflow-ellipsis overflow-hidden"
                         >
+                            {#if hasPinnedTag(post.data.tags)}
+                                <code class="mr-2 rounded-md bg-[var(--inline-code-bg)] px-1 py-0.5 text-sm font-medium text-[var(--inline-code-color)]">pinned</code>
+                            {/if}
                             {post.data.title}
                         </div>
 

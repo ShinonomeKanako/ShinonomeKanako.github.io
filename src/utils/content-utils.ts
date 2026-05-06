@@ -1,6 +1,7 @@
 import { type CollectionEntry, getCollection } from "astro:content";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
+import { getDisplayTags, hasPinnedTag } from "@utils/post-utils";
 import { getCategoryUrl } from "@utils/url-utils.ts";
 
 // // Retrieve posts and sort them by publication date
@@ -10,9 +11,13 @@ async function getRawSortedPosts() {
 	});
 
 	const sorted = allBlogPosts.sort((a, b) => {
-		const dateA = new Date(a.data.published);
-		const dateB = new Date(b.data.published);
-		return dateA > dateB ? -1 : 1;
+		const pinnedA = hasPinnedTag(a.data.tags);
+		const pinnedB = hasPinnedTag(b.data.tags);
+		if (pinnedA !== pinnedB) return pinnedA ? -1 : 1;
+
+		const dateA = new Date(a.data.published).getTime();
+		const dateB = new Date(b.data.published).getTime();
+		return dateB - dateA;
 	});
 	return sorted;
 }
@@ -58,7 +63,7 @@ export async function getTagList(): Promise<Tag[]> {
 
 	const countMap: { [key: string]: number } = {};
 	allBlogPosts.forEach((post: { data: { tags: string[] } }) => {
-		post.data.tags.forEach((tag: string) => {
+		getDisplayTags(post.data.tags).forEach((tag: string) => {
 			if (!countMap[tag]) countMap[tag] = 0;
 			countMap[tag]++;
 		});
